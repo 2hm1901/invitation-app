@@ -1,0 +1,286 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Tạo Sự Kiện | Thiệp Tốt Nghiệp</title>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;0,700;1,400;1,600&family=Montserrat:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg-out: #e8e6df;
+  --bg-card: #fdfcf7;
+  --text-main: #2b3036;
+  --text-light: #5a646e;
+  --gold: #b3915f;
+  --gold-light: #d4b88c;
+  --border-color: #dcd7cb;
+}
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+  font-family: 'Montserrat', sans-serif;
+  min-height: 100vh;
+  background-color: var(--bg-out);
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.65' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)' opacity='0.05'/%3E%3C/svg%3E");
+  display: flex; align-items: center; justify-content: center;
+  padding: 24px; overflow-x: hidden;
+  color: var(--text-main);
+}
+
+.wrapper {
+  position: relative; z-index: 1;
+  width: 100%; max-width: 480px;
+  animation: fadeUp 0.8s ease-out both;
+}
+@keyframes fadeUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+
+.panel {
+  background: var(--bg-card);
+  border: 1px solid var(--border-color);
+  padding: 50px 44px;
+  box-shadow: 0 15px 35px rgba(0,0,0,0.04), 0 5px 15px rgba(0,0,0,0.02);
+  position: relative; overflow: hidden;
+  border-radius: 4px;
+}
+.panel::before {
+  content: ''; position: absolute; inset: 10px;
+  border: 1px solid var(--gold-light); opacity: 0.5; pointer-events: none;
+}
+
+.p-badge {
+  text-align: center; font-size: 10px; letter-spacing: 3px;
+  text-transform: uppercase; color: var(--text-light); margin-bottom: 16px;
+}
+.p-title {
+  font-family: 'Cormorant Garamond', serif;
+  font-size: 34px; font-weight: 600;
+  text-align: center; line-height: 1.2; margin-bottom: 12px;
+  color: var(--text-main);
+}
+.p-title em { color: var(--gold); font-style: italic; font-weight: 500; }
+.p-sub {
+  text-align: center; font-size: 13px; font-weight: 300;
+  color: var(--text-light); margin-bottom: 30px; line-height: 1.5;
+}
+
+.div-line { display: flex; align-items: center; gap: 16px; margin-bottom: 30px; justify-content: center; }
+.div-line::before, .div-line::after { content: ''; width: 40px; height: 1px; background: var(--gold-light); opacity: 0.6; }
+.div-line span { color: var(--gold); font-size: 16px; font-family: serif; }
+
+.field { margin-bottom: 28px; }
+.fp-label { display: block; font-size: 11px; letter-spacing: 1px; text-transform: uppercase; color: var(--text-light); margin-bottom: 10px; font-weight: 500; }
+.fp-input {
+  width: 100%; padding: 14px 0;
+  background: transparent;
+  border: none; border-bottom: 1px solid var(--border-color);
+  color: var(--text-main);
+  font-family: 'Cormorant Garamond', serif; font-size: 20px; font-style: italic; outline: none;
+  transition: border-color 0.3s; text-align: center;
+}
+.fp-input::placeholder { color: #b8b8b8; font-style: italic; font-size: 18px; }
+.fp-input:focus { border-bottom-color: var(--gold); }
+
+.fp-btn {
+  width: 100%; padding: 16px; border: 1px solid var(--gold); border-radius: 2px;
+  font-family: 'Montserrat', sans-serif; font-size: 13px; font-weight: 500;
+  cursor: pointer; letter-spacing: 2px; text-transform: uppercase;
+  background: var(--gold); color: #fff;
+  transition: all 0.3s;
+  margin-top: 8px;
+}
+.fp-btn:hover:not(:disabled) { background: #9a7b4f; border-color: #9a7b4f; }
+.fp-btn:active { transform: translateY(1px); }
+.fp-btn:disabled { opacity: 0.6; cursor: not-allowed; }
+
+.err-msg { color: #d9534f; font-size: 12px; text-align: center; margin-top: 12px; display: none; }
+.err-msg.on { display: block; animation: shk 0.4s ease; }
+@keyframes shk { 0%,100%{transform:translateX(0)} 25%{transform:translateX(-4px)} 75%{transform:translateX(4px)} }
+
+/* Result panel */
+.result-panel {
+  display: none;
+  background: var(--bg-card);
+  border: 1px solid var(--border-color);
+  padding: 50px 44px;
+  box-shadow: 0 15px 35px rgba(0,0,0,0.04);
+  position: relative; overflow: hidden;
+  border-radius: 4px;
+}
+.result-panel.visible {
+  display: block;
+  animation: fadeUp 0.7s ease-out both;
+}
+.result-panel::before {
+  content: ''; position: absolute; inset: 10px;
+  border: 1px solid var(--gold-light); opacity: 0.5; pointer-events: none;
+}
+
+.res-check {
+  text-align: center; font-size: 36px; margin-bottom: 16px;
+}
+.res-title {
+  font-family: 'Cormorant Garamond', serif;
+  font-size: 30px; font-weight: 600;
+  text-align: center; margin-bottom: 8px;
+}
+.res-sub {
+  text-align: center; font-size: 13px; font-weight: 300;
+  color: var(--text-light); margin-bottom: 30px;
+}
+
+.link-block {
+  margin-bottom: 20px;
+}
+.link-label { font-size: 11px; letter-spacing: 1px; text-transform: uppercase; color: var(--text-light); margin-bottom: 8px; font-weight: 500; }
+.link-row {
+  display: flex; gap: 10px; align-items: stretch;
+  border: 1px solid var(--border-color); border-radius: 2px; overflow: hidden;
+}
+.link-url {
+  flex: 1; padding: 10px 14px;
+  font-family: 'Cormorant Garamond', serif; font-size: 17px; font-style: italic;
+  color: var(--text-main); background: var(--bg-out);
+  border: none; outline: none; cursor: default;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  min-width: 0;
+}
+.copy-btn {
+  padding: 10px 16px; background: var(--gold); color: #fff;
+  border: none; cursor: pointer; font-family: 'Montserrat', sans-serif;
+  font-size: 11px; font-weight: 500; letter-spacing: 1px; text-transform: uppercase;
+  transition: background 0.2s; flex-shrink: 0;
+}
+.copy-btn:hover { background: #9a7b4f; }
+.copy-btn.copied { background: #5a9e6f; }
+
+.warning-box {
+  margin-top: 24px;
+  padding: 18px 20px;
+  background: #fffbf2;
+  border: 1px solid var(--gold-light);
+  border-left: 4px solid var(--gold);
+  border-radius: 2px;
+}
+.warning-box p {
+  font-size: 12.5px; line-height: 1.7; color: var(--text-light);
+}
+.warning-box strong { color: var(--gold); }
+</style>
+</head>
+<body>
+<div class="wrapper" id="wrap">
+
+  <!-- FORM -->
+  <div class="panel" id="formPanel">
+    <div class="p-badge">Host · Create Event</div>
+    <h2 class="p-title">Tạo Sự Kiện<br><em>Tốt Nghiệp</em></h2>
+    <div class="div-line"><span>❧</span></div>
+    <p class="p-sub">Điền thông tin bên dưới để tạo link thiệp mời<br>dành riêng cho từng khách.</p>
+
+    <div class="field">
+      <label class="fp-label" for="hostName">Tên chủ tiệc</label>
+      <input class="fp-input" type="text" id="hostName" placeholder="Nguyễn Văn A" autocomplete="off">
+    </div>
+    <div class="field">
+      <label class="fp-label" for="eventTime">Thời gian tổ chức</label>
+      <input class="fp-input" type="datetime-local" id="eventTime">
+    </div>
+    <div class="field">
+      <label class="fp-label" for="location">Địa điểm</label>
+      <input class="fp-input" type="text" id="location" placeholder="Hội trường Chăm Pa" autocomplete="off">
+    </div>
+
+    <button class="fp-btn" id="createBtn" onclick="submitCreateEvent()">Tạo Link Chia Sẻ</button>
+    <p class="err-msg" id="errMsg"></p>
+  </div>
+
+  <!-- RESULT -->
+  <div class="result-panel" id="resultPanel">
+    <div class="res-check">✦</div>
+    <h2 class="res-title">Đã Tạo Thành Công!</h2>
+    <p class="res-sub">Chia sẻ các link bên dưới cho khách mời của bạn.</p>
+
+    <div class="link-block">
+      <div class="link-label">Link chia sẻ cho khách</div>
+      <div class="link-row">
+        <input class="link-url" id="publicUrlInput" readonly>
+        <button class="copy-btn" onclick="copyLink('publicUrlInput', this)">Copy</button>
+      </div>
+    </div>
+
+    <div class="link-block">
+      <div class="link-label">Link quản lý (chỉ dành cho host)</div>
+      <div class="link-row">
+        <input class="link-url" id="adminUrlInput" readonly>
+        <button class="copy-btn" onclick="copyLink('adminUrlInput', this)">Copy</button>
+      </div>
+    </div>
+
+    <div class="warning-box">
+      <p><strong>⚠ Lưu ý quan trọng:</strong> Vui lòng lưu lại link quản lý này ngay bây giờ. Hệ thống không yêu cầu đăng nhập và <strong>không thể khôi phục link nếu mất.</strong></p>
+    </div>
+  </div>
+
+</div>
+
+<script>
+async function submitCreateEvent() {
+  const btn  = document.getElementById('createBtn');
+  const errEl = document.getElementById('errMsg');
+  errEl.classList.remove('on');
+
+  const host_name  = document.getElementById('hostName').value.trim();
+  const event_time = document.getElementById('eventTime').value.trim();
+  const location   = document.getElementById('location').value.trim();
+
+  if (!host_name || !event_time || !location) {
+    errEl.textContent = 'Vui lòng điền đầy đủ tất cả thông tin.';
+    errEl.classList.add('on');
+    return;
+  }
+
+  btn.disabled = true;
+  btn.textContent = 'ĐANG TẠO...';
+
+  try {
+    const res = await fetch('/api/events', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ host_name, event_time, location })
+    });
+
+    const data = await res.json();
+
+    if (!res.ok) {
+      throw new Error(data.error || 'Có lỗi xảy ra, vui lòng thử lại.');
+    }
+
+    document.getElementById('publicUrlInput').value = data.publicUrl;
+    document.getElementById('adminUrlInput').value  = data.adminUrl;
+
+    document.getElementById('formPanel').style.cssText = 'opacity:0;transform:translateY(-10px);transition:all 0.4s ease;pointer-events:none';
+    setTimeout(() => {
+      document.getElementById('formPanel').style.display = 'none';
+      document.getElementById('resultPanel').classList.add('visible');
+    }, 400);
+
+  } catch (e) {
+    errEl.textContent = e.message;
+    errEl.classList.add('on');
+    btn.disabled = false;
+    btn.textContent = 'TẠO LINK CHIA SẺ';
+  }
+}
+
+function copyLink(inputId, btn) {
+  const val = document.getElementById(inputId).value;
+  navigator.clipboard.writeText(val).then(() => {
+    const orig = btn.textContent;
+    btn.textContent = 'Đã Copy!';
+    btn.classList.add('copied');
+    setTimeout(() => { btn.textContent = orig; btn.classList.remove('copied'); }, 2000);
+  });
+}
+</script>
+</body>
+</html>
