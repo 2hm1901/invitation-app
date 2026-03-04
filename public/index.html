@@ -273,13 +273,26 @@ async function submitCreateEvent() {
 }
 
 function copyLink(inputId, btn) {
-  const val = document.getElementById(inputId).value;
-  navigator.clipboard.writeText(val).then(() => {
+  const input = document.getElementById(inputId);
+  const val   = input.value;
+
+  const confirm = () => {
     const orig = btn.textContent;
     btn.textContent = 'Đã Copy!';
     btn.classList.add('copied');
     setTimeout(() => { btn.textContent = orig; btn.classList.remove('copied'); }, 2000);
-  });
+  };
+
+  if (navigator.clipboard && window.isSecureContext) {
+    navigator.clipboard.writeText(val).then(confirm);
+  } else {
+    // Fallback cho HTTP / môi trường không secure
+    input.select();
+    input.setSelectionRange(0, 9999);
+    document.execCommand('copy');
+    window.getSelection()?.removeAllRanges();
+    confirm();
+  }
 }
 </script>
 </body>
