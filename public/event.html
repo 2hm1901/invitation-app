@@ -401,9 +401,79 @@ canvas#cardCv { width: 100%; height: auto; aspect-ratio: 1/1.414; display: block
   .closing { padding: 70px 24px; }
   .form-panel { padding: 40px 28px; }
 }
+
+
+
+/* ── Step Bar ── */
+#stepBar {
+  position: fixed; bottom: 0; left: 0; right: 0; z-index: 200;
+  background: rgba(26,18,8,0.93); backdrop-filter: blur(8px);
+  border-top: 1px solid rgba(201,168,76,0.2);
+  display: flex; align-items: center; justify-content: center;
+  padding: 12px 20px;
+  transform: translateY(100%); transition: transform 0.4s cubic-bezier(0.16,1,0.3,1);
+}
+#stepBar.show { transform: translateY(0); }
+.step-item {
+  display: flex; align-items: center; gap: 8px;
+  font-family: 'DM Sans', sans-serif; font-size: 10px;
+  letter-spacing: 0.15em; text-transform: uppercase;
+  color: rgba(250,246,240,0.3); transition: color 0.4s; white-space: nowrap;
+}
+.step-item.active { color: var(--gold-light); }
+.step-item.done { color: rgba(250,246,240,0.2); }
+.step-num {
+  width: 22px; height: 22px; border-radius: 50%;
+  border: 1px solid currentColor; flex-shrink: 0;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 10px; transition: all 0.4s;
+}
+.step-item.active .step-num { background: var(--gold); border-color: var(--gold); color: var(--deep); }
+.step-item.done .step-num::after { content: '✓'; }
+.step-item.done .step-num span { display: none; }
+.step-div { width: 28px; height: 1px; background: rgba(201,168,76,0.25); margin: 0 12px; flex-shrink: 0; }
+@media (max-width: 500px) {
+  .step-item .step-label { display: none; }
+  .step-div { width: 16px; margin: 0 8px; }
+}
+
+/* ── RSVP Overlay ── */
+#rsvpOverlay {
+  position: absolute; inset: 0;
+  background: rgba(20,13,4,0.7); backdrop-filter: blur(3px);
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+  gap: 28px; border-radius: 2px;
+  opacity: 0; pointer-events: none;
+  transition: opacity 0.7s ease;
+}
+#rsvpOverlay.on { opacity: 1; pointer-events: all; }
+.rsvp-overlay-text {
+  font-family: 'Cormorant Garamond', serif; font-size: clamp(20px, 3vw, 30px);
+  font-style: italic; color: var(--cream); text-align: center;
+  padding: 0 10%; line-height: 1.5;
+}
+.rsvp-overlay-btns { display: flex; gap: 16px; flex-wrap: wrap; justify-content: center; }
 </style>
 </head>
 <body>
+
+<!-- Step Bar -->
+<div id="stepBar">
+  <div class="step-item active" id="step1">
+    <div class="step-num"><span>1</span></div>
+    <span class="step-label">Đọc câu chuyện</span>
+  </div>
+  <div class="step-div"></div>
+  <div class="step-item" id="step2">
+    <div class="step-num"><span>2</span></div>
+    <span class="step-label">Nhận thiệp</span>
+  </div>
+  <div class="step-div"></div>
+  <div class="step-item" id="step3">
+    <div class="step-num"><span>3</span></div>
+    <span class="step-label">Xác nhận tham dự</span>
+  </div>
+</div>
 
 <!-- Error Screen -->
 <div id="errorScreen" style="position:relative;z-index:1">
@@ -579,11 +649,16 @@ canvas#cardCv { width: 100%; height: auto; aspect-ratio: 1/1.414; display: block
 <div id="scene">
   <div class="card-container">
     <canvas id="cardCv" width="1200" height="1697"></canvas>
+    <div id="rsvpOverlay">
+      <p class="rsvp-overlay-text">Hãy cho mình biết bạn có đến không nhé!</p>
+      <div class="rsvp-overlay-btns">
+        <button class="c-btn c-btn-attend" id="btnAttend" onclick="respond('attending')">✓ Tôi sẽ đến dự</button>
+        <button class="c-btn c-btn-wish"   id="btnWish"   onclick="respond('wish_only')">✉ Chỉ gửi lời chúc</button>
+      </div>
+    </div>
   </div>
   <div class="card-btns">
-    <button class="c-btn c-btn-attend" id="btnAttend" onclick="respond('attending')">✓ Tôi sẽ đến dự</button>
-    <button class="c-btn c-btn-wish"   id="btnWish"   onclick="respond('wish_only')">✉ Chỉ gửi lời chúc</button>
-    <button class="c-btn"              id="btnDl"     onclick="dlCard()">⬇ Tải thiệp xuống</button>
+    <button class="c-btn" id="btnDl" onclick="dlCard()">⬇ Tải thiệp xuống</button>
   </div>
   <p class="confirm-msg" id="confirmMsg"></p>
 </div>
@@ -798,14 +873,20 @@ function go(){
   if(!name){ err.classList.add('on'); return; }
   genBtn.disabled=true; genBtn.textContent='ĐANG XỬ LÝ...';
   document.getElementById('formPanel').classList.add('hidden');
+  document.querySelectorAll('.hero, .chapter, .section').forEach(el => el.style.display = 'none');
   lastName = name;
   document.fonts.ready.then(()=>{
     runLoading(()=>{
       document.getElementById('closingSection').style.display='none';
-      document.querySelectorAll('.hero, .chapter, .section').forEach(el => el.style.display = 'none');
       const scene = document.getElementById('scene');
       scene.classList.add('visible');
       drawCard(name, eventData);
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+      setStep(3);
+      document.getElementById('stepBar').classList.add('show');
+      setTimeout(() => {
+        document.getElementById('rsvpOverlay').classList.add('on');
+      }, 1200);
     });
   });
 }
@@ -813,11 +894,14 @@ function go(){
 async function respond(status){
   if(responded) return;
   responded = true;
+  setTimeout(() => document.getElementById('stepBar').classList.remove('show'), 3000);
+  const overlay   = document.getElementById('rsvpOverlay');
   const btnAttend = document.getElementById('btnAttend');
   const btnWish   = document.getElementById('btnWish');
   const msg       = document.getElementById('confirmMsg');
   btnAttend.disabled = true;
   btnWish.disabled   = true;
+  overlay.classList.remove('on');
 
   try {
     await fetch(`/api/events/${eventId}/guests`, {
@@ -962,6 +1046,30 @@ const closingObs = new IntersectionObserver((entries) => {
 }, { threshold: 0.1 });
 const closingEl = document.getElementById('closingSection');
 if(closingEl) closingObs.observe(closingEl);
+
+// ── Step Bar logic ──
+function setStep(n) {
+  for (let i = 1; i <= 3; i++) {
+    const el = document.getElementById('step'+i);
+    el.classList.remove('active','done');
+    if (i < n) el.classList.add('done');
+    else if (i === n) el.classList.add('active');
+  }
+}
+const heroVisObs = new IntersectionObserver(entries => {
+  const inView = entries[0].isIntersecting;
+  document.getElementById('stepBar').classList.toggle('show', !inView);
+}, { threshold: 0.15 });
+heroVisObs.observe(document.querySelector('.hero'));
+
+const formStepObs = new IntersectionObserver(entries => {
+  if (entries[0].isIntersecting) {
+    if (!document.getElementById('scene').classList.contains('visible')) setStep(2);
+  } else {
+    if (!document.getElementById('scene').classList.contains('visible')) setStep(1);
+  }
+}, { threshold: 0.2 });
+if(closingEl) formStepObs.observe(closingEl);
 
 /* ─── Init: load event from API ─── */
 (async function init(){
