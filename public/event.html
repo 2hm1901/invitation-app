@@ -711,6 +711,40 @@ function formatDateTime(raw){
   return d.toLocaleString('vi-VN',{weekday:'long',day:'2-digit',month:'2-digit',year:'numeric',hour:'2-digit',minute:'2-digit'});
 }
 
+/* Mixed-font helpers: Cormorant Garamond for letters, Montserrat for digits */
+function measureMixed(ctx, text, tFont, nFont) {
+  let w = 0;
+  for (const ch of text) {
+    ctx.font = /[\d:\/.]/.test(ch) ? nFont : tFont;
+    w += ctx.measureText(ch).width;
+  }
+  return w;
+}
+function fillMixed(ctx, text, cx, y, tFont, nFont) {
+  const totalW = measureMixed(ctx, text, tFont, nFont);
+  ctx.textAlign = 'left';
+  let x = cx - totalW / 2;
+  for (const ch of text) {
+    ctx.font = /[\d:\/.]/.test(ch) ? nFont : tFont;
+    ctx.fillText(ch, x, y);
+    x += ctx.measureText(ch).width;
+  }
+  ctx.textAlign = 'center';
+}
+function wrapMixed(ctx, text, maxW, tFont, nFont) {
+  const words = text.split(' ');
+  const lines = [];
+  let line = '';
+  for (const word of words) {
+    const test = line ? line + ' ' + word : word;
+    if (measureMixed(ctx, test, tFont, nFont) > maxW && line) {
+      lines.push(line); line = word;
+    } else { line = test; }
+  }
+  if (line) lines.push(line);
+  return lines;
+}
+
 function drawClassicBorder(ctx,W,H,inset,color,thick){
   ctx.strokeStyle=color; ctx.lineWidth=thick;
   ctx.strokeRect(inset,inset,W-inset*2,H-inset*2);
@@ -765,27 +799,39 @@ function drawCard(name, evData){
   cctx.fillText('đánh dấu chặng đường trưởng thành của mình nhé.',W/2,975);
 
   /* Info box */
-  cctx.fillStyle='#f6f4ed'; cctx.fillRect(W/2-350,1080,700,240);
+  cctx.fillStyle='#f6f4ed'; cctx.fillRect(W/2-350,1080,700,260);
   cctx.strokeStyle='#e2dfd5'; cctx.lineWidth=1;
-  cctx.strokeRect(W/2-350,1080,700,240);
-  cctx.beginPath(); cctx.moveTo(W/2,1110); cctx.lineTo(W/2,1290); cctx.stroke();
+  cctx.strokeRect(W/2-350,1080,700,260);
+  cctx.beginPath(); cctx.moveTo(W/2,1110); cctx.lineTo(W/2,1340); cctx.stroke();
+
+  // font pairing: 28px Cormorant for letters, 25px Montserrat for digits (matched cap-height)
+  const colW = 270, lh = 40;
+  const TF  = '400 28px "Cormorant Garamond"';
+  const NF  = '500 25px "Montserrat"';
+  const TFS = 'italic 24px "Cormorant Garamond"';
+  const NFS = '400 22px "Montserrat"';
 
   /* Time */
   cctx.font='600 20px "Montserrat"'; cctx.fillStyle='#b3915f';
   cctx.letterSpacing='3px'; cctx.fillText('THỜI GIAN',W/2-175,1140); cctx.letterSpacing='0px';
   const dtParts = formatDateTime(evData.event_time).split(',');
-  cctx.font='400 30px "Cormorant Garamond"'; cctx.fillStyle='#2b3036';
-  cctx.fillText(dtParts[0]||evData.event_time, W/2-175,1195);
-  cctx.font='italic 26px "Cormorant Garamond"'; cctx.fillStyle='#5a646e';
-  cctx.fillText((dtParts[1]||'').trim(), W/2-175,1245);
+  cctx.fillStyle='#2b3036';
+  const dateLines = wrapMixed(cctx, dtParts[0]||evData.event_time, colW, TF, NF);
+  dateLines.forEach((l, i) => fillMixed(cctx, l, W/2-175, 1196 + i * lh, TF, NF));
+  if (dtParts[1]) {
+    cctx.fillStyle='#5a646e';
+    fillMixed(cctx, dtParts[1].trim(), W/2-175, 1196 + dateLines.length * lh, TFS, NFS);
+  }
 
   /* Location */
   cctx.font='600 20px "Montserrat"'; cctx.fillStyle='#b3915f';
   cctx.letterSpacing='3px'; cctx.fillText('ĐỊA ĐIỂM',W/2+175,1140); cctx.letterSpacing='0px';
-  cctx.font='400 30px "Cormorant Garamond"'; cctx.fillStyle='#2b3036';
-  cctx.fillText(evData.location,W/2+175,1195);
-  cctx.font='italic 26px "Cormorant Garamond"'; cctx.fillStyle='#5a646e';
-  cctx.fillText('Kính mời quý khách',W/2+175,1245);
+  cctx.fillStyle='#2b3036';
+  wrapMixed(cctx, evData.location, colW, TF, NF)
+    .forEach((l, i) => fillMixed(cctx, l, W/2+175, 1196 + i * lh, TF, NF));
+  cctx.fillStyle='#5a646e';
+  cctx.font = TFS;
+  cctx.fillText('Kính mời quý khách', W/2+175, 1282);
 
   cctx.font='40px serif'; cctx.fillStyle='#dcd7cb'; cctx.fillText('✤',W/2,1550);
 }
